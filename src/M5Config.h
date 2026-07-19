@@ -57,6 +57,7 @@ public:
         TYPE_INT16_T,
         TYPE_INT32_T,
         TYPE_BOOL,
+        TYPE_STRING_ARRAY,
         TYPE_SUBMENU,
         TYPE_FUNCTION
     };
@@ -87,71 +88,45 @@ public:
         ValueType type;
 
         Pointer pointer;
+        String* array_pointer = nullptr;
         IncrementType increment;
         IncrementType lower_limit;
         IncrementType upper_limit;
 
         ScrollType scroll_type;
 
-        // Generic constructor
-        template<typename T, typename A, typename B, typename C>
-        ConfigItem(
-            const char* n,
-            T* ptr,
-            A inc,
-            B min,
-            C max,
-            ScrollType sct = ScrollType(DEFAULT_SCROLL)
-        )
-            : name(n),
-              type(ValueType::TYPE_UINT8_T), // temporary, fixed below
-              scroll_type(sct)
-        {
-            pointer.data = ptr;
 
-            if constexpr (std::is_same<T, uint8_t>::value) {
-                type = ValueType::TYPE_UINT8_T;
-                increment.u8 = inc;
-                lower_limit.u8 = min;
-                upper_limit.u8 = max;
-            }
-            else if constexpr (std::is_same<T, uint16_t>::value) {
-                type = ValueType::TYPE_UINT16_T;
-                increment.u16 = inc;
-                lower_limit.u16 = min;
-                upper_limit.u16 = max;
-            }
-            else if constexpr (std::is_same<T, uint32_t>::value) {
-                type = ValueType::TYPE_UINT32_T;
-                increment.u32 = inc;
-                lower_limit.u32 = min;
-                upper_limit.u32 = max;
-            }
-            else if constexpr (std::is_same<T, int8_t>::value) {
-                type = ValueType::TYPE_INT8_T;
-                increment.i8 = inc;
-                lower_limit.i8 = min;
-                upper_limit.i8 = max;
-            }
-            else if constexpr (std::is_same<T, int16_t>::value) {
-                type = ValueType::TYPE_INT16_T;
-                increment.i16 = inc;
-                lower_limit.i16 = min;
-                upper_limit.i16 = max;
-            }
-            else if constexpr (std::is_same<T, int32_t>::value) {
-                type = ValueType::TYPE_INT32_T;
-                increment.i32 = inc;
-                lower_limit.i32 = min;
-                upper_limit.i32 = max;
-            }
-            else {
-                static_assert(!std::is_same<T, T>::value,
-                              "Unsupported ConfigItem type");
-            }
+        ConfigItem(const char* n, uint8_t* ptr, uint8_t inc = 1, uint8_t min = 0, uint8_t max = UINT8_MAX, ScrollType sct = ScrollType(DEFAULT_SCROLL))
+            : name(n), type(ValueType::TYPE_UINT8_T), scroll_type(sct) {
+            pointer.data = ptr; increment.u8 = inc; lower_limit.u8 = min; upper_limit.u8 = max;
         }
 
-        // function constructor
+        ConfigItem(const char* n, uint16_t* ptr, uint16_t inc = 1, uint16_t min = 0, uint16_t max = UINT16_MAX, ScrollType sct = ScrollType(DEFAULT_SCROLL))
+            : name(n), type(ValueType::TYPE_UINT16_T), scroll_type(sct) {
+            pointer.data = ptr; increment.u16 = inc; lower_limit.u16 = min; upper_limit.u16 = max;
+        }
+
+        ConfigItem(const char* n, uint32_t* ptr, uint32_t inc = 1, uint32_t min = 0, uint32_t max = UINT32_MAX, ScrollType sct = ScrollType(DEFAULT_SCROLL))
+            : name(n), type(ValueType::TYPE_UINT32_T), scroll_type(sct) {
+            pointer.data = ptr; increment.u32 = inc; lower_limit.u32 = min; upper_limit.u32 = max;
+        }
+
+        ConfigItem(const char* n, int8_t* ptr, int8_t inc = 1, int8_t min = INT8_MIN, int8_t max = INT8_MAX, ScrollType sct = ScrollType(DEFAULT_SCROLL))
+            : name(n), type(ValueType::TYPE_INT8_T), scroll_type(sct) {
+            pointer.data = ptr; increment.i8 = inc; lower_limit.i8 = min; upper_limit.i8 = max;
+        }
+
+        ConfigItem(const char* n, int16_t* ptr, int16_t inc = 1, int16_t min = INT16_MIN, int16_t max = INT16_MAX, ScrollType sct = ScrollType(DEFAULT_SCROLL))
+            : name(n), type(ValueType::TYPE_INT16_T), scroll_type(sct) {
+            pointer.data = ptr; increment.i16 = inc; lower_limit.i16 = min; upper_limit.i16 = max;
+        }
+
+        ConfigItem(const char* n, int32_t* ptr, int32_t inc = 1, int32_t min = INT32_MIN, int32_t max = INT32_MAX, ScrollType sct = ScrollType(DEFAULT_SCROLL))
+            : name(n), type(ValueType::TYPE_INT32_T), scroll_type(sct) {
+            pointer.data = ptr; increment.i32 = inc; lower_limit.i32 = min; upper_limit.i32 = max;
+        }
+
+        // function overload
 
         ConfigItem(const char* n, void (*func)())
             : name(n),
@@ -160,7 +135,7 @@ public:
             pointer.function = func;
         }
 
-        // bool constructor
+        // bool overload
 
         ConfigItem(const char* n, bool* ptr)
             : name(n),
@@ -171,8 +146,20 @@ public:
             lower_limit.u8 = 0;
             upper_limit.u8 = 1;
         }
+        // string array overload
+        template <size_t N>
+        ConfigItem(const char* n, uint8_t* ptr, String (&array)[N], ScrollType sct = ScrollType(DEFAULT_SCROLL))
+            : name(n), type(ValueType::TYPE_STRING_ARRAY),
+            scroll_type(sct)
+        {
+            increment.u8 = 1;
+            lower_limit.u8 = 0;
+            upper_limit.u8 = N - 1;
+            pointer.data = ptr;
+            array_pointer = array;
+        }
 
-        //submenu constructor
+        // submenu overload
         ConfigItem(const char* n, ConfigMenu* submenu)
             : name(n),
               type(ValueType::TYPE_SUBMENU)
@@ -185,6 +172,9 @@ public:
         uint8_t id;
         ConfigItem* config_items;
         uint16_t size;
+        template <size_t N>
+            ConfigMenu(uint8_t id_, ConfigItem (&items)[N])
+        : id(id_), config_items(items), size(N){}
     };
 
 

@@ -37,7 +37,7 @@ String M5Config::_formatValue(ConfigItem* item){
         case ValueType::TYPE_INT8_T:{return String(*static_cast<int8_t*>(item->pointer.data));}
         case ValueType::TYPE_INT16_T:{return String(*static_cast<int16_t*>(item->pointer.data));}
         case ValueType::TYPE_INT32_T:{return String(*static_cast<int32_t*>(item->pointer.data));}
-    }
+        case ValueType::TYPE_STRING_ARRAY:{String* array = static_cast<String*>(item->array_pointer); return array[*static_cast<uint8_t*>(item->pointer.data)];}}
     return "";
 }
 // monolithic ahh caster with wrapping
@@ -53,7 +53,7 @@ void M5Config::_incrementValue(ConfigItem* item, int8_t delta){
             *value = !(*value);
             return;
         }
-
+        case ValueType::TYPE_STRING_ARRAY:
         case ValueType::TYPE_UINT8_T:{
             uint8_t* value = static_cast<uint8_t*>(item->pointer.data);
             int16_t increment = item->increment.u8 * delta;
