@@ -1,13 +1,13 @@
-#include "M5Config.h"
+#include "M5Menu.h"
 #include <SD.h>
-void M5Config::_goBack(){
+void M5Menu::_goBack(){
     if (_stack_index == 0) return;
     _cursor_offset = 0;
     _cursor_index = 0;
     _stack_index --;
     return;}
 
-void M5Config::goToMenu(ConfigMenu* menu, bool append){
+void M5Menu::goToMenu(Menu* menu, bool append){
     if(append){
         _stack_index ++;
         _menuStack[_stack_index] = menu;
@@ -22,7 +22,7 @@ void M5Config::goToMenu(ConfigMenu* menu, bool append){
     return;
 }
 
-String M5Config::_formatValue(ConfigItem* item){
+String M5Menu::_formatValue(MenuItem* item){
     if(item->pointer.data == nullptr )
     {return "";}
     
@@ -41,7 +41,7 @@ String M5Config::_formatValue(ConfigItem* item){
     return "";
 }
 // monolithic ahh caster with wrapping
-void M5Config::_incrementValue(ConfigItem* item, int8_t delta){
+void M5Menu::_incrementValue(MenuItem* item, int8_t delta){
     if(item->pointer.data == nullptr) return;
     
     switch (item->type){
@@ -205,7 +205,7 @@ void M5Config::_incrementValue(ConfigItem* item, int8_t delta){
         }
     }
 
-void M5Config::render(){
+void M5Menu::render(){
     if (_canvas == nullptr) return;
     if (!_active) return;
     auto old_style = _canvas->getTextStyle();
@@ -218,7 +218,7 @@ void M5Config::render(){
     
     for (uint16_t i = _cursor_offset; i < window_offset; i++){
         if (menu_size == 0) break;
-        ConfigItem* item = &_menuStack[_stack_index]->config_items[i];
+        MenuItem* item = &_menuStack[_stack_index]->config_items[i];
         String current_item_name = item->name;
         String current_item_value = _formatValue(item);
         uint16_t value_color = _theme.value_color;
@@ -247,7 +247,7 @@ void M5Config::render(){
     return;
 }
 
-void M5Config::begin(M5Canvas* targetCanvas, SettingInteracted callback){
+void M5Menu::begin(M5Canvas* targetCanvas, ItemInteracted callback){
     _canvas = targetCanvas;
     _callback = callback;
     _width = _canvas->width();
@@ -256,7 +256,7 @@ void M5Config::begin(M5Canvas* targetCanvas, SettingInteracted callback){
     return;
 }
 
-void M5Config::open(){
+void M5Menu::open(){
     if (_menuStack[0] == nullptr) return;
     _active = true;
     render();
@@ -264,23 +264,23 @@ void M5Config::open(){
     return;
 }
 
-void M5Config::setTheme(ExplorerTheme* theme){
+void M5Menu::setTheme(MenuTheme* theme){
     if (theme == nullptr) {
-        if (!_had_theme) _theme = ExplorerTheme();}
-    else {_theme = *theme; _had_theme = true;}
+        if (!_had_theme) _theme = MenuTheme();}// idk why i did this but hey it works
+    else {_theme = *theme; _had_theme = true;} // TODO: see why i did this
     return;
 }
 
-void M5Config::close(){
+void M5Menu::close(){
     _canvas->clear();
     _active = false;
     return;
 }
 
-void M5Config::process_input(Input input){
+void M5Menu::process_input(Input input){
     if (!_active) return;
     uint16_t menu_size = _menuStack[_stack_index]->size;
-    ConfigItem current_selection = _menuStack[_stack_index]->config_items[_selection];
+    MenuItem current_selection = _menuStack[_stack_index]->config_items[_selection];
     bool ran_function = false;
     bool interacted = false;
     switch (input)
@@ -340,8 +340,8 @@ void M5Config::process_input(Input input){
         {
         case ValueType::TYPE_BOOL:{_incrementValue(&current_selection,1); interacted = true; break;}
         case ValueType::TYPE_SUBMENU:{
-            ConfigMenu* menu =
-                static_cast<ConfigMenu*>(current_selection.pointer.data);
+            Menu* menu =
+                static_cast<Menu*>(current_selection.pointer.data);
 
             goToMenu(menu, true);
             interacted = true;
@@ -366,6 +366,6 @@ void M5Config::process_input(Input input){
     if (interacted and _callback) _callback(&current_selection,_menuStack[_stack_index]);
 }
 
-M5Config::ConfigMenu* M5Config::get_current_menu(){
+M5Menu::Menu* M5Menu::get_current_menu(){
     return _menuStack[_stack_index];
 }

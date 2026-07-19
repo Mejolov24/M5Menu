@@ -1,5 +1,5 @@
-#ifndef M5CONFIG_H
-#define M5CONFIG_H
+#ifndef M5Menu_H
+#define M5Menu_H
 
 #ifndef MAX_DEPTH // Size of the stack (BIGGER THAN 0)
     #define MAX_DEPTH 8
@@ -15,15 +15,15 @@
 
 extern M5Canvas canvas;
 
-class M5Config
+class M5Menu
 {
 public:
 
-    struct ConfigMenu;
-    struct ConfigItem;
-    using SettingInteracted = void (*)(ConfigItem*,ConfigMenu*);
+    struct Menu;
+    struct MenuItem;
+    using ItemInteracted = void (*)(MenuItem*,Menu*);
 
-    struct ExplorerTheme {
+    struct MenuTheme {
         uint16_t background_color = BLACK;
         uint16_t border_color = WHITE;
         uint16_t selection_color = BLUE;
@@ -82,7 +82,7 @@ public:
         void (*function)();
     };
 
-    struct ConfigItem
+    struct MenuItem
     {
         const char* name;
         ValueType type;
@@ -96,39 +96,39 @@ public:
         ScrollType scroll_type;
 
 
-        ConfigItem(const char* n, uint8_t* ptr, uint8_t inc = 1, uint8_t min = 0, uint8_t max = UINT8_MAX, ScrollType sct = ScrollType(DEFAULT_SCROLL))
+        MenuItem(const char* n, uint8_t* ptr, uint8_t inc = 1, uint8_t min = 0, uint8_t max = UINT8_MAX, ScrollType sct = ScrollType(DEFAULT_SCROLL))
             : name(n), type(ValueType::TYPE_UINT8_T), scroll_type(sct) {
             pointer.data = ptr; increment.u8 = inc; lower_limit.u8 = min; upper_limit.u8 = max;
         }
 
-        ConfigItem(const char* n, uint16_t* ptr, uint16_t inc = 1, uint16_t min = 0, uint16_t max = UINT16_MAX, ScrollType sct = ScrollType(DEFAULT_SCROLL))
+        MenuItem(const char* n, uint16_t* ptr, uint16_t inc = 1, uint16_t min = 0, uint16_t max = UINT16_MAX, ScrollType sct = ScrollType(DEFAULT_SCROLL))
             : name(n), type(ValueType::TYPE_UINT16_T), scroll_type(sct) {
             pointer.data = ptr; increment.u16 = inc; lower_limit.u16 = min; upper_limit.u16 = max;
         }
 
-        ConfigItem(const char* n, uint32_t* ptr, uint32_t inc = 1, uint32_t min = 0, uint32_t max = UINT32_MAX, ScrollType sct = ScrollType(DEFAULT_SCROLL))
+        MenuItem(const char* n, uint32_t* ptr, uint32_t inc = 1, uint32_t min = 0, uint32_t max = UINT32_MAX, ScrollType sct = ScrollType(DEFAULT_SCROLL))
             : name(n), type(ValueType::TYPE_UINT32_T), scroll_type(sct) {
             pointer.data = ptr; increment.u32 = inc; lower_limit.u32 = min; upper_limit.u32 = max;
         }
 
-        ConfigItem(const char* n, int8_t* ptr, int8_t inc = 1, int8_t min = INT8_MIN, int8_t max = INT8_MAX, ScrollType sct = ScrollType(DEFAULT_SCROLL))
+        MenuItem(const char* n, int8_t* ptr, int8_t inc = 1, int8_t min = INT8_MIN, int8_t max = INT8_MAX, ScrollType sct = ScrollType(DEFAULT_SCROLL))
             : name(n), type(ValueType::TYPE_INT8_T), scroll_type(sct) {
             pointer.data = ptr; increment.i8 = inc; lower_limit.i8 = min; upper_limit.i8 = max;
         }
 
-        ConfigItem(const char* n, int16_t* ptr, int16_t inc = 1, int16_t min = INT16_MIN, int16_t max = INT16_MAX, ScrollType sct = ScrollType(DEFAULT_SCROLL))
+        MenuItem(const char* n, int16_t* ptr, int16_t inc = 1, int16_t min = INT16_MIN, int16_t max = INT16_MAX, ScrollType sct = ScrollType(DEFAULT_SCROLL))
             : name(n), type(ValueType::TYPE_INT16_T), scroll_type(sct) {
             pointer.data = ptr; increment.i16 = inc; lower_limit.i16 = min; upper_limit.i16 = max;
         }
 
-        ConfigItem(const char* n, int32_t* ptr, int32_t inc = 1, int32_t min = INT32_MIN, int32_t max = INT32_MAX, ScrollType sct = ScrollType(DEFAULT_SCROLL))
+        MenuItem(const char* n, int32_t* ptr, int32_t inc = 1, int32_t min = INT32_MIN, int32_t max = INT32_MAX, ScrollType sct = ScrollType(DEFAULT_SCROLL))
             : name(n), type(ValueType::TYPE_INT32_T), scroll_type(sct) {
             pointer.data = ptr; increment.i32 = inc; lower_limit.i32 = min; upper_limit.i32 = max;
         }
 
         // function overload
 
-        ConfigItem(const char* n, void (*func)())
+        MenuItem(const char* n, void (*func)())
             : name(n),
               type(ValueType::TYPE_FUNCTION)
         {
@@ -137,7 +137,7 @@ public:
 
         // bool overload
 
-        ConfigItem(const char* n, bool* ptr)
+        MenuItem(const char* n, bool* ptr)
             : name(n),
               type(ValueType::TYPE_BOOL)
         {
@@ -148,7 +148,7 @@ public:
         }
         // string array overload
         template <size_t N>
-        ConfigItem(const char* n, uint8_t* ptr, String (&array)[N], ScrollType sct = ScrollType(DEFAULT_SCROLL))
+        MenuItem(const char* n, uint8_t* ptr, String (&array)[N], ScrollType sct = ScrollType(DEFAULT_SCROLL))
             : name(n), type(ValueType::TYPE_STRING_ARRAY),
             scroll_type(sct)
         {
@@ -160,7 +160,7 @@ public:
         }
 
         // submenu overload
-        ConfigItem(const char* n, ConfigMenu* submenu)
+        MenuItem(const char* n, Menu* submenu)
             : name(n),
               type(ValueType::TYPE_SUBMENU)
         {
@@ -168,12 +168,12 @@ public:
         }
     };
 
-    struct ConfigMenu {
+    struct Menu {
         uint8_t id;
-        ConfigItem* config_items;
+        MenuItem* config_items;
         uint16_t size;
         template <size_t N>
-            ConfigMenu(uint8_t id_, ConfigItem (&items)[N])
+            Menu(uint8_t id_, MenuItem (&items)[N])
         : id(id_), config_items(items), size(N){}
     };
 
@@ -182,10 +182,10 @@ private:
     // internal engine stuff
     M5Canvas* _canvas;
 
-    ExplorerTheme _theme;
-    SettingInteracted _callback = nullptr;
+    MenuTheme _theme;
+    ItemInteracted _callback = nullptr;
 
-    ConfigMenu* _menuStack[MAX_DEPTH];
+    Menu* _menuStack[MAX_DEPTH];
 
     uint8_t _width = 0;
     uint8_t _half_width = 0;
@@ -200,19 +200,19 @@ private:
     bool _active = false;
 
     void _goBack();
-    void _incrementValue(ConfigItem* item, int8_t delta);
-    String _formatValue(ConfigItem* item);
+    void _incrementValue(MenuItem* item, int8_t delta);
+    String _formatValue(MenuItem* item);
 
     public:
 
-    void begin(M5Canvas* targetCanvas, SettingInteracted callback = nullptr);
-    void setTheme(ExplorerTheme* theme = nullptr);
+    void begin(M5Canvas* targetCanvas, ItemInteracted callback = nullptr);
+    void setTheme(MenuTheme* theme = nullptr);
     void open();
     void close();
     void render();
-    void goToMenu(ConfigMenu* menu, bool append = false); // if not append, override menu stack.
+    void goToMenu(Menu* menu, bool append = false); // if not append, override menu stack.
     void process_input(Input input);
-    ConfigMenu* get_current_menu();
+    Menu* get_current_menu();
 };
 
 #endif

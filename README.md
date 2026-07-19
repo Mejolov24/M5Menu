@@ -1,12 +1,12 @@
-# M5Config
-A lightweight configuration UI library for M5Stack devices, featuring a stack-based menu navigator, custom themes, and an explicit input processing API.
+# M5Menu
+A lightweight Menu UI library for M5Stack devices, featuring a recursive menu navigator and custom themes.
 
 Only tested on CardputerADV, but should work on any M5Stack device.
 
-![thumbnail](https://github.com/Mejolov24/M5Config/blob/main/thumbnail.jpeg?raw=true)
+![thumbnail](https://github.com/Mejolov24/M5Menu/blob/main/thumbnail.jpeg?raw=true)
 
 ## Features
-* Direct Data: Pass direct pointers to your variables (uint8_t, int32_t, bool, etc.). The library automatically handles type parsing, bounds checking, and variable updates under the hood (preprocessor only).
+* Direct Data: Pass direct pointers to your variables (uint8_t, int32_t, bool, etc.). The library automatically handles type parsing, bounds checking, and variable updates under the hood.
 
 * Functional Menu Actions: Support direct function pointers to execute instant code blocks right from the UI selection.
 
@@ -21,11 +21,11 @@ Only tested on CardputerADV, but should work on any M5Stack device.
 Add the following to your `platformio.ini`:
 ```ini
 lib_deps = 
-    https://github.com/Mejolov24/M5Config
+    https://github.com/Mejolov24/M5Menu
 ```
 
 ## Prerequisites
-M5Config relies on the official M5Stack ecosystem for hardware interaction. Ensure your project is targeting an ESP32 variant and that you initialize the device via `M5.begin()` inside `setup()`, and canvas using `M5Canvas canvas(&M5.Lcd)` at the top of your main sketch after.
+M5Menu relies on the official M5Stack ecosystem for hardware interaction. Ensure your project is targeting an ESP32 variant and that you initialize the device via `M5.begin()` inside `setup()`, and canvas using `M5Canvas canvas(&M5.Lcd)` at the top of your main sketch after.
 
 ## Initialization example:
 ```cpp
@@ -33,16 +33,16 @@ M5Config relies on the official M5Stack ecosystem for hardware interaction. Ensu
 #include <M5Unified.h>
 M5Canvas canvas(&M5.Lcd);
 
-#include <M5Config.h>
-M5Config config;
+#include <M5Menu.h>
+M5Menu menu;
 
-void OnUsage(M5Config::ConfigItem* item){}
+void OnUsage(M5Menu::MenuItem* item, M5Menu::Menu* menu){}
 
 void setup(){
     auto cfg = M5.config();
     M5.begin(cfg); 
     canvas.createSprite(M5.Lcd.width(), M5.Lcd.height());
-    config.begin(&canvas,OnUsage);
+    menu.begin(&canvas,OnUsage);
 ```
 ## Usage
 All usage examples can be found under /examples
@@ -55,9 +55,9 @@ All usage examples can be found under /examples
 #define DEFAULT_SCROLL 0 // default ScrollType
 ```
 
-### Explorer Theme
+### Menu Theme
 ```cpp
-struct ExplorerTheme {
+struct MenuTheme {
     uint16_t background_color = BLACK;
     uint16_t border_color = WHITE;
     uint16_t selection_color = BLUE;
@@ -73,7 +73,7 @@ struct ExplorerTheme {
 };
 ```
 ### ValueType
-Used for casting the Pointer.data, automaticlly handled by the preprocessor, if you need to declare ConfigItems at runtime, you must use them.
+Used for casting the Pointer.data, automaticlly handled by the preprocessor, if you need to declare MenuItems at runtime, you must use them.
 ```cpp
 enum class ValueType {
     TYPE_UINT8_T,
@@ -83,6 +83,7 @@ enum class ValueType {
     TYPE_INT16_T,
     TYPE_INT32_T,
     TYPE_BOOL,
+    TYPE_STRING_ARRAY,
     TYPE_SUBMENU,
     TYPE_FUNCTION
 };
@@ -108,15 +109,15 @@ union IncrementType {
     int32_t i32;
 };
 ```
-### ConfigItem and ConfigMenu
-each tweakable element from the UI requires to be in an array and assigned into a ConfigMenu struct
+### MenuItem and Menu
+each tweakable element from the UI requires to be in an array and assigned into a Menu struct
 ```cpp
 union Pointer {
     void* data;
     void (*function)();
 };
 
-struct ConfigItem
+struct MenuItem
 {
     const char* name;
     ValueType type;
@@ -129,25 +130,24 @@ struct ConfigItem
     ScrollType scroll_type;
 }
 
-struct ConfigMenu {
-    ConfigItem* config_items;
-    uint16_t size;
+struct Menu {
+    uint8_t id;
+    MenuItem* config_items;
 };
 
 // Usage
-uint8_t item1 = 0
-bool item2 = 0
+uint8_t item1 = 0;
+bool item2 = 0;
 void item3(){}
-M5Config::ConfigMenu menu1
 
-M5Config::ConfigItem configs[] = {
+M5Menu::MenuItem mymenu[] = {
     {
         "0-10", // name
         &item1, // pointer to variable
         1, // increment
         0, // minimum
         10,// maximum
-        M5Config::ScrollType::TYPE_CLAMP
+        M5Menu::ScrollType::TYPE_CLAMP
     },
     {
         "bool",
@@ -159,60 +159,53 @@ M5Config::ConfigItem configs[] = {
     },
     {
         "sub menu",
-        &menu1 // pointer to ConfigMenu
+        &menu1 // pointer to Menu
     }
 };
 
-M5Config::ConfigMenu menu = {
-    .config_items = configs, 
-    .size = sizeof(configs) / sizeof(configs[0])
-};
+M5Menu::Menu menu(0,mymenu)
 ```
 ### goToMenu()
-menu: pointer to ConfigMenu.
-append: if true: adds the ConfigMenu pointer to the stack, if false: it overrides the entire stack (default to false)
+menu: pointer to Menu.
+append: if true: adds the Menu pointer to the stack, if false: it overrides the entire stack (default to false)
 
 Only call with append argument set to true when adding some kind of hidden settings menu that has no entry point.
 
 This is usually called once at setup or if you have multiple settings at diffent places then its called before open()
 ```cpp
-M5Config::ConfigItem configs[] = {};
-M5Config::ConfigMenu menu = {
-    .config_items = configs, 
-    .size = sizeof(configs) / sizeof(configs[0])
-};
+M5Menu::MenuItem mymenu;
 
-config.goToMenu(&menu);
+menu.goToMenu(&mymenu);
 ```
 
 ### begin()
 #### Arguments:
 targetCanvas : pointer to a canvas object
-callback : funtion to call after interacting with a ConfigItem (optional argument).
+callback : funtion to call after interacting with a MenuItem (optional argument).
 ```cpp
 #include <M5GFX.h>
 #include <M5Unified.h>
 M5Canvas canvas(&M5.Lcd);
-#include <M5Config.h>
+#include <M5Menu.h>
 
-void OnUsage(M5Config::ConfigItem* item){}
+void OnUsage(M5Menu::MenuItem* item){}
 
 void setup(){
     auto cfg = M5.config();
     M5.begin(cfg); 
     canvas.createSprite(M5.Lcd.width(), M5.Lcd.height());
-    config.begin(&canvas,OnUsage);
+    menu.begin(&canvas,OnUsage);
 }
 ```
 
 ### setTheme()
 overrides current theme
 #### Arguments:
-theme : pointer of a ExplorerTheme struct
+theme : pointer of a MenuTheme struct
 ```cpp
-M5Config::ExplorerTheme theme;
+M5Menu::MenuTheme theme;
 theme.value_color = WHITE;
-config.setTheme(&theme);
+menu.setTheme(&theme);
 ```
 
 ### open()
@@ -236,7 +229,7 @@ enum class Input {
     SELECT
 };
 // Usage
-config.process_input(M5Config::Input::);
+menu.process_input(M5Menu::Input::);
 ```
 
 ## License

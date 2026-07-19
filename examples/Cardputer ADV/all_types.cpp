@@ -2,8 +2,8 @@
 M5Canvas canvas(&M5.Lcd);
 #define MAX_DEPTH 1
 #define DEFAULT_SCROLL 1 // 0 = CLAMP | 1 = WRAP | 2 = CYCLIC
-#include <M5Config.h>
-M5Config config;
+#include <M5Menu.h>
+M5Menu menu;
 
 uint8_t item1 = 0;
 uint16_t item2 = 0;
@@ -34,7 +34,7 @@ void item10(){
 }
 
 // full declarations:
-M5Config::ConfigItem configs2[] = {
+M5Menu::MenuItem menuitems2[] = {
     {
         "0-10", // name
         &item8, // pointer to variable
@@ -48,7 +48,7 @@ M5Config::ConfigItem configs2[] = {
         10,
         0,
         100,
-        M5Config::ScrollType::TYPE_CLAMP
+        M5Menu::ScrollType::TYPE_CLAMP
     },
         {
         "0-100, +10, wrap", 
@@ -56,7 +56,7 @@ M5Config::ConfigItem configs2[] = {
         10,
         0,
         100,
-        M5Config::ScrollType::TYPE_WRAP
+        M5Menu::ScrollType::TYPE_WRAP
     },
         {
         "0-100, +10, cyclic", 
@@ -64,7 +64,7 @@ M5Config::ConfigItem configs2[] = {
         10,
         0,
         100,
-        M5Config::ScrollType::TYPE_CYCLIC
+        M5Menu::ScrollType::TYPE_CYCLIC
     },
     {
         "function",
@@ -79,9 +79,9 @@ M5Config::ConfigItem configs2[] = {
     }
 };
 
-M5Config::ConfigMenu menu2(2,configs2);
+M5Menu::Menu mymenu2(2,menuitems2);
 
-M5Config::ConfigItem configs[] = {
+M5Menu::MenuItem menuitems[] = {
     {
         "uint8_t",
         &item1,
@@ -117,14 +117,14 @@ M5Config::ConfigItem configs[] = {
     },
     {
         "sub menu",
-        &menu2
+        &mymenu2
     },
 };
 
-M5Config::ConfigMenu menu(1,configs);
+M5Menu::Menu mymenu(1,menuitems);
 
 
-void OnUsage(M5Config::ConfigItem* item, M5Config::ConfigMenu* menu){
+void OnUsage(M5Menu::MenuItem* item, M5Menu::Menu* menu){
     // used for updating values
     }
 
@@ -134,7 +134,7 @@ void setup(){
     canvas.createSprite(240, 135);
 
     // custom theme setup, setting every single theme entry:
-    M5Config::ExplorerTheme theme;
+    M5Menu::MenuTheme theme;
     theme.background_color = 0x211a;
     theme.border_color = 0x2c9f;
     theme.selection_color = 0x06e0;
@@ -148,26 +148,26 @@ void setup(){
     theme.font = &fonts::FreeSans12pt7b;
 
     // Setup and open menu
-    config.begin(&canvas,OnUsage);
-    config.setTheme(&theme);
-    config.goToMenu(&menu); // Only call with append argument true when adding some kind of hidden setting that has no item entry
-    config.open(); // if an argument is not providen, it will use defualts or latest config.
+    menu.begin(&canvas,OnUsage);
+    menu.setTheme(&theme);
+    menu.goToMenu(&mymenu); // Only call with append argument true when adding some kind of hidden setting that has no item entry
+    menu.open(); // if an argument is not providen, it will use defualts or latest menu.
 }
 
 void loop(){
   M5Cardputer.update();
     if (M5Cardputer.Keyboard.isChange()) {
     auto keys = M5Cardputer.Keyboard.keysState();
-    if (M5Cardputer.Keyboard.isKeyPressed(';')){config.process_input(M5Config::Input::UP);}
-    if (M5Cardputer.Keyboard.isKeyPressed('.')){config.process_input(M5Config::Input::DOWN);}
-    if (M5Cardputer.Keyboard.isKeyPressed(',')){config.process_input(M5Config::Input::LEFT);}
-    if (M5Cardputer.Keyboard.isKeyPressed('/')){config.process_input(M5Config::Input::RIGHT);}
-    if (keys.enter){config.process_input(M5Config::Input::SELECT);}
-    if (keys.del){config.process_input(M5Config::Input::BACK);}
+    if (M5Cardputer.Keyboard.isKeyPressed(';')){menu.process_input(M5Menu::Input::UP);}
+    if (M5Cardputer.Keyboard.isKeyPressed('.')){menu.process_input(M5Menu::Input::DOWN);}
+    if (M5Cardputer.Keyboard.isKeyPressed(',')){menu.process_input(M5Menu::Input::LEFT);}
+    if (M5Cardputer.Keyboard.isKeyPressed('/')){menu.process_input(M5Menu::Input::RIGHT);}
+    if (keys.enter){menu.process_input(M5Menu::Input::SELECT);}
+    if (keys.del){menu.process_input(M5Menu::Input::BACK);}
     
-    if (M5Cardputer.Keyboard.isKeyPressed('=')){config.open();}
+    if (M5Cardputer.Keyboard.isKeyPressed('=')){menu.open();}
     if (M5Cardputer.Keyboard.isKeyPressed('-')){
-        config.close();
+        menu.close();
         canvas.setTextColor(YELLOW);
         canvas.drawString("Closed",0,0,&fonts::FreeMonoBold24pt7b);
         canvas.pushSprite(0,0);
