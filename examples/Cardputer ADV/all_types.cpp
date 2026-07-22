@@ -123,6 +123,9 @@ M5Menu::MenuItem menuitems[] = {
 
 M5Menu::Menu mymenu(1,menuitems);
 
+void render(){
+    canvas.pushSprite(0,0);
+}
 
 void OnUsage(M5Menu::MenuItem* item, M5Menu::Menu* menu){
     // used for updating values
@@ -148,7 +151,7 @@ void setup(){
     theme.font = &fonts::FreeSans12pt7b;
 
     // Setup and open menu
-    menu.begin(&canvas,OnUsage);
+    menu.begin(&canvas,render,OnUsage);
     menu.setTheme(&theme);
     menu.goToMenu(&mymenu); // Only call with append argument true when adding some kind of hidden setting that has no item entry
     menu.open(); // if an argument is not providen, it will use defualts or latest menu.

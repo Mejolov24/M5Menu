@@ -23,39 +23,39 @@ void M5Menu::goToMenu(Menu* menu, bool append){
 }
 
 String M5Menu::_formatValue(MenuItem* item){
-    if(item->pointer.data == nullptr )
+    if(item->data == nullptr )
     {return "";}
     
     switch (item->type){
         case ValueType::TYPE_SUBMENU:
         case ValueType::TYPE_FUNCTION:
         return "";
-        case ValueType::TYPE_BOOL:{return String((*static_cast<bool*>(item->pointer.data)) ? _theme.bool_true_string : _theme.bool_false_string);}
-        case ValueType::TYPE_UINT8_T:{return String(*static_cast<uint8_t*>(item->pointer.data));}
-        case ValueType::TYPE_UINT16_T:{return String(*static_cast<uint16_t*>(item->pointer.data));}
-        case ValueType::TYPE_UINT32_T:{return String(*static_cast<uint32_t*>(item->pointer.data));}
-        case ValueType::TYPE_INT8_T:{return String(*static_cast<int8_t*>(item->pointer.data));}
-        case ValueType::TYPE_INT16_T:{return String(*static_cast<int16_t*>(item->pointer.data));}
-        case ValueType::TYPE_INT32_T:{return String(*static_cast<int32_t*>(item->pointer.data));}
-        case ValueType::TYPE_STRING_ARRAY:{String* array = static_cast<String*>(item->array_pointer); return array[*static_cast<uint8_t*>(item->pointer.data)];}}
+        case ValueType::TYPE_BOOL:{return String((*static_cast<bool*>(item->data)) ? _theme.bool_true_string : _theme.bool_false_string);}
+        case ValueType::TYPE_UINT8_T:{return String(*static_cast<uint8_t*>(item->data));}
+        case ValueType::TYPE_UINT16_T:{return String(*static_cast<uint16_t*>(item->data));}
+        case ValueType::TYPE_UINT32_T:{return String(*static_cast<uint32_t*>(item->data));}
+        case ValueType::TYPE_INT8_T:{return String(*static_cast<int8_t*>(item->data));}
+        case ValueType::TYPE_INT16_T:{return String(*static_cast<int16_t*>(item->data));}
+        case ValueType::TYPE_INT32_T:{return String(*static_cast<int32_t*>(item->data));}
+        case ValueType::TYPE_STRING_ARRAY:{String* array = static_cast<String*>(item->array_pointer); return array[*static_cast<uint8_t*>(item->data)];}}
     return "";
 }
 // monolithic ahh caster with wrapping
 void M5Menu::_incrementValue(MenuItem* item, int8_t delta){
-    if(item->pointer.data == nullptr) return;
+    if(item->data == nullptr) return;
     
     switch (item->type){
         case ValueType::TYPE_SUBMENU:
         case ValueType::TYPE_FUNCTION:
         return;
         case ValueType::TYPE_BOOL:{
-            bool* value = static_cast<bool*>(item->pointer.data);
+            bool* value = static_cast<bool*>(item->data);
             *value = !(*value);
             return;
         }
         case ValueType::TYPE_STRING_ARRAY:
         case ValueType::TYPE_UINT8_T:{
-            uint8_t* value = static_cast<uint8_t*>(item->pointer.data);
+            uint8_t* value = static_cast<uint8_t*>(item->data);
             int16_t increment = item->increment.u8 * delta;
             uint8_t min = item->lower_limit.u8;
             uint8_t max = item->upper_limit.u8;
@@ -82,7 +82,7 @@ void M5Menu::_incrementValue(MenuItem* item, int8_t delta){
         }
 
         case ValueType::TYPE_UINT16_T:{
-            uint16_t* value = static_cast<uint16_t*>(item->pointer.data);
+            uint16_t* value = static_cast<uint16_t*>(item->data);
             int32_t increment = item->increment.u16 * delta;
             uint16_t min = item->lower_limit.u16;
             uint16_t max = item->upper_limit.u16;
@@ -107,7 +107,7 @@ void M5Menu::_incrementValue(MenuItem* item, int8_t delta){
         }
 
         case ValueType::TYPE_UINT32_T:{
-            uint32_t* value = static_cast<uint32_t*>(item->pointer.data);
+            uint32_t* value = static_cast<uint32_t*>(item->data);
             int64_t increment = item->increment.u32 * (int64_t)delta;
             uint32_t min = item->lower_limit.u32;
             uint32_t max = item->upper_limit.u32;
@@ -131,7 +131,7 @@ void M5Menu::_incrementValue(MenuItem* item, int8_t delta){
             return;
         }
         case ValueType::TYPE_INT8_T:{
-            int8_t* value = static_cast<int8_t*>(item->pointer.data);
+            int8_t* value = static_cast<int8_t*>(item->data);
             int16_t increment = item->increment.i8 * delta;
             int8_t min = item->lower_limit.i8;
             int8_t max = item->upper_limit.i8;
@@ -155,7 +155,7 @@ void M5Menu::_incrementValue(MenuItem* item, int8_t delta){
             return;
         }
         case ValueType::TYPE_INT16_T:{
-            int16_t* value = static_cast<int16_t*>(item->pointer.data);
+            int16_t* value = static_cast<int16_t*>(item->data);
             int32_t increment = item->increment.i16 * delta;
             int16_t min = item->lower_limit.i16;
             int16_t max = item->upper_limit.i16;
@@ -179,7 +179,7 @@ void M5Menu::_incrementValue(MenuItem* item, int8_t delta){
             return;
         }
         case ValueType::TYPE_INT32_T:{
-            int32_t* value = static_cast<int32_t*>(item->pointer.data);
+            int32_t* value = static_cast<int32_t*>(item->data);
             int64_t increment = item->increment.i32 * delta;
             int32_t min = item->lower_limit.i32;
             int32_t max = item->upper_limit.i32;
@@ -222,7 +222,7 @@ void M5Menu::render(){
         String current_item_name = item->name;
         String current_item_value = _formatValue(item);
         uint16_t value_color = _theme.value_color;
-        if(item->type == ValueType::TYPE_BOOL){value_color = (*(bool*)item->pointer.data) ? _theme.bool_true_color : _theme.bool_false_color;}
+        if(item->type == ValueType::TYPE_BOOL){value_color = (*(bool*)item->data) ? _theme.bool_true_color : _theme.bool_false_color;}
 
         if(i == selection_cursor and menu_size != 0){
             _canvas->fillRect(0, draw_offset, _width, _theme.item_height, _theme.selection_color);
@@ -240,16 +240,17 @@ void M5Menu::render(){
 
     }
 
-
-    _canvas->pushSprite(0,0);
+    
+    if(_request_render) _request_render();
     _canvas->setTextStyle(old_style);
 
     return;
 }
 
-void M5Menu::begin(M5Canvas* targetCanvas, ItemInteracted callback){
+void M5Menu::begin(M5Canvas* targetCanvas, RequestRender request_render, CallBack callback = nullptr){
     _canvas = targetCanvas;
     _callback = callback;
+    _request_render = request_render;
     _width = _canvas->width();
     _height = _canvas->height();
     _half_width = int(_width / 2);
@@ -341,7 +342,7 @@ void M5Menu::process_input(Input input){
         case ValueType::TYPE_BOOL:{_incrementValue(&current_selection,1); interacted = true; break;}
         case ValueType::TYPE_SUBMENU:{
             Menu* menu =
-                static_cast<Menu*>(current_selection.pointer.data);
+                static_cast<Menu*>(current_selection.data);
 
             goToMenu(menu, true);
             interacted = true;
@@ -361,9 +362,11 @@ void M5Menu::process_input(Input input){
     break;
     }
     _selection = _cursor_offset + _cursor_index;
-    if (ran_function) current_selection.pointer.function();
+    if (ran_function) current_selection.function();
     else render();
-    if (interacted and _callback) _callback(&current_selection,_menuStack[_stack_index]);
+    if (!interacted) return;
+    if(_callback) _callback(&current_selection,_menuStack[_stack_index]);
+    if(&current_selection.function and !ran_function) current_selection.function();
 }
 
 M5Menu::Menu* M5Menu::get_current_menu(){

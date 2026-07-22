@@ -21,7 +21,8 @@ public:
 
     struct Menu;
     struct MenuItem;
-    using ItemInteracted = void (*)(MenuItem*,Menu*);
+    using CallBack = void (*)(MenuItem*,Menu*);
+    using RequestRender = void (*)();
 
     struct MenuTheme {
         uint16_t background_color = BLACK;
@@ -77,17 +78,12 @@ public:
         int32_t i32;
     };
 
-    union Pointer {
-        void* data;
-        void (*function)();
-    };
-
     struct MenuItem
     {
         const char* name;
         ValueType type;
-
-        Pointer pointer;
+        void* data = nullptr;
+        void (*function)() = nullptr;
         String* array_pointer = nullptr;
         IncrementType increment;
         IncrementType lower_limit;
@@ -96,34 +92,34 @@ public:
         ScrollType scroll_type;
 
 
-        MenuItem(const char* n, uint8_t* ptr, uint8_t inc = 1, uint8_t min = 0, uint8_t max = UINT8_MAX, ScrollType sct = ScrollType(DEFAULT_SCROLL))
+        MenuItem(const char* n, uint8_t* ptr, uint8_t inc = 1, uint8_t min = 0, uint8_t max = UINT8_MAX, void (*callback)() = nullptr, ScrollType sct = ScrollType(DEFAULT_SCROLL))
             : name(n), type(ValueType::TYPE_UINT8_T), scroll_type(sct) {
-            pointer.data = ptr; increment.u8 = inc; lower_limit.u8 = min; upper_limit.u8 = max;
+            data = ptr; increment.u8 = inc; lower_limit.u8 = min; upper_limit.u8 = max; function = callback;
         }
 
-        MenuItem(const char* n, uint16_t* ptr, uint16_t inc = 1, uint16_t min = 0, uint16_t max = UINT16_MAX, ScrollType sct = ScrollType(DEFAULT_SCROLL))
+        MenuItem(const char* n, uint16_t* ptr, uint16_t inc = 1, uint16_t min = 0, uint16_t max = UINT16_MAX, void (*callback)() = nullptr, ScrollType sct = ScrollType(DEFAULT_SCROLL))
             : name(n), type(ValueType::TYPE_UINT16_T), scroll_type(sct) {
-            pointer.data = ptr; increment.u16 = inc; lower_limit.u16 = min; upper_limit.u16 = max;
+            data = ptr; increment.u16 = inc; lower_limit.u16 = min; upper_limit.u16 = max; function = callback;
         }
 
-        MenuItem(const char* n, uint32_t* ptr, uint32_t inc = 1, uint32_t min = 0, uint32_t max = UINT32_MAX, ScrollType sct = ScrollType(DEFAULT_SCROLL))
+        MenuItem(const char* n, uint32_t* ptr, uint32_t inc = 1, uint32_t min = 0, uint32_t max = UINT32_MAX, void (*callback)() = nullptr, ScrollType sct = ScrollType(DEFAULT_SCROLL))
             : name(n), type(ValueType::TYPE_UINT32_T), scroll_type(sct) {
-            pointer.data = ptr; increment.u32 = inc; lower_limit.u32 = min; upper_limit.u32 = max;
+            data = ptr; increment.u32 = inc; lower_limit.u32 = min; upper_limit.u32 = max; function = callback;
         }
 
-        MenuItem(const char* n, int8_t* ptr, int8_t inc = 1, int8_t min = INT8_MIN, int8_t max = INT8_MAX, ScrollType sct = ScrollType(DEFAULT_SCROLL))
+        MenuItem(const char* n, int8_t* ptr, int8_t inc = 1, int8_t min = INT8_MIN, int8_t max = INT8_MAX, void (*callback)() = nullptr, ScrollType sct = ScrollType(DEFAULT_SCROLL))
             : name(n), type(ValueType::TYPE_INT8_T), scroll_type(sct) {
-            pointer.data = ptr; increment.i8 = inc; lower_limit.i8 = min; upper_limit.i8 = max;
+            data = ptr; increment.i8 = inc; lower_limit.i8 = min; upper_limit.i8 = max; function = callback;
         }
 
-        MenuItem(const char* n, int16_t* ptr, int16_t inc = 1, int16_t min = INT16_MIN, int16_t max = INT16_MAX, ScrollType sct = ScrollType(DEFAULT_SCROLL))
+        MenuItem(const char* n, int16_t* ptr, int16_t inc = 1, int16_t min = INT16_MIN, int16_t max = INT16_MAX, void (*callback)() = nullptr, ScrollType sct = ScrollType(DEFAULT_SCROLL))
             : name(n), type(ValueType::TYPE_INT16_T), scroll_type(sct) {
-            pointer.data = ptr; increment.i16 = inc; lower_limit.i16 = min; upper_limit.i16 = max;
+            data = ptr; increment.i16 = inc; lower_limit.i16 = min; upper_limit.i16 = max; function = callback;
         }
 
-        MenuItem(const char* n, int32_t* ptr, int32_t inc = 1, int32_t min = INT32_MIN, int32_t max = INT32_MAX, ScrollType sct = ScrollType(DEFAULT_SCROLL))
+        MenuItem(const char* n, int32_t* ptr, int32_t inc = 1, int32_t min = INT32_MIN, int32_t max = INT32_MAX, void (*callback)() = nullptr, ScrollType sct = ScrollType(DEFAULT_SCROLL))
             : name(n), type(ValueType::TYPE_INT32_T), scroll_type(sct) {
-            pointer.data = ptr; increment.i32 = inc; lower_limit.i32 = min; upper_limit.i32 = max;
+            data = ptr; increment.i32 = inc; lower_limit.i32 = min; upper_limit.i32 = max; function = callback;
         }
 
         // function overload
@@ -132,39 +128,42 @@ public:
             : name(n),
               type(ValueType::TYPE_FUNCTION)
         {
-            pointer.function = func;
+            function = func;
         }
 
         // bool overload
 
-        MenuItem(const char* n, bool* ptr)
+        MenuItem(const char* n, bool* ptr,void (*callback)() = nullptr)
             : name(n),
               type(ValueType::TYPE_BOOL)
         {
-            pointer.data = ptr;
+            data = ptr;
             increment.u8 = 1;
             lower_limit.u8 = 0;
             upper_limit.u8 = 1;
+            function = callback;
         }
         // string array overload
         template <size_t N>
-        MenuItem(const char* n, uint8_t* ptr, String (&array)[N], ScrollType sct = ScrollType(DEFAULT_SCROLL))
+        MenuItem(const char* n, uint8_t* ptr, String (&array)[N], void (*callback)() = nullptr, ScrollType sct = ScrollType(DEFAULT_SCROLL))
             : name(n), type(ValueType::TYPE_STRING_ARRAY),
             scroll_type(sct)
         {
             increment.u8 = 1;
             lower_limit.u8 = 0;
             upper_limit.u8 = N - 1;
-            pointer.data = ptr;
+            data = ptr;
             array_pointer = array;
+            function = callback:
         }
 
         // submenu overload
-        MenuItem(const char* n, Menu* submenu)
+        MenuItem(const char* n, Menu* submenu,void (*callback)() = nullptr)
             : name(n),
               type(ValueType::TYPE_SUBMENU)
         {
-            pointer.data = submenu;
+            data = submenu;
+            function = callback;
         }
     };
 
@@ -183,7 +182,8 @@ private:
     M5Canvas* _canvas;
 
     MenuTheme _theme;
-    ItemInteracted _callback = nullptr;
+    CallBack _callback = nullptr;
+    RequestRender _request_render = nullptr;
 
     Menu* _menuStack[MAX_DEPTH];
 
@@ -205,7 +205,7 @@ private:
 
     public:
 
-    void begin(M5Canvas* targetCanvas, ItemInteracted callback = nullptr);
+    void begin(M5Canvas* targetCanvas, RequestRender request_render, CallBack callback = nullptr);
     void setTheme(MenuTheme* theme = nullptr);
     void open();
     void close();

@@ -127,6 +127,10 @@ M5Menu::MenuItem menuitems[] = {
 
 M5Menu::Menu mymenu(1,menuitems);
 
+void render(){
+    canvas.pushSprite(0,0);
+}
+
 void OnUsage(M5Menu::MenuItem* item, M5Menu::Menu* menu){
     // used for updating values
     }
