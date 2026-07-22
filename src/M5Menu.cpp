@@ -247,7 +247,7 @@ void M5Menu::render(){
     return;
 }
 
-void M5Menu::begin(M5Canvas* targetCanvas, RequestRender request_render, CallBack callback = nullptr){
+void M5Menu::begin(M5Canvas* targetCanvas, RequestRender request_render, CallBack callback){
     _canvas = targetCanvas;
     _callback = callback;
     _request_render = request_render;

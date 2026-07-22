@@ -154,7 +154,7 @@ public:
             upper_limit.u8 = N - 1;
             data = ptr;
             array_pointer = array;
-            function = callback:
+            function = callback;
         }
 
         // submenu overload
