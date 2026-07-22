@@ -281,7 +281,7 @@ void M5Menu::close(){
 void M5Menu::process_input(Input input){
     if (!_active) return;
     uint16_t menu_size = _menuStack[_stack_index]->size;
-    MenuItem current_selection = _menuStack[_stack_index]->config_items[_selection];
+    MenuItem* current_selection = &(_menuStack[_stack_index]->config_items[_selection]);
     bool ran_function = false;
     bool interacted = false;
     switch (input)
@@ -321,14 +321,14 @@ void M5Menu::process_input(Input input){
         break;
     
     case(Input::LEFT):{
-        if(current_selection.type == ValueType::TYPE_FUNCTION or current_selection.type ==  ValueType::TYPE_SUBMENU) return;
-        _incrementValue(&current_selection,-1);
+        if(current_selection->type == ValueType::TYPE_FUNCTION or current_selection->type ==  ValueType::TYPE_SUBMENU) return;
+        _incrementValue(current_selection,-1);
         interacted = true;
         break;
     }
     case(Input::RIGHT):{
-        if(current_selection.type == ValueType::TYPE_FUNCTION or current_selection.type ==  ValueType::TYPE_SUBMENU) return;
-        _incrementValue(&current_selection,1);
+        if(current_selection->type == ValueType::TYPE_FUNCTION or current_selection->type ==  ValueType::TYPE_SUBMENU) return;
+        _incrementValue(current_selection,1);
         interacted = true;
         break;
     }
@@ -337,12 +337,12 @@ void M5Menu::process_input(Input input){
         {
         if (menu_size == 0) break;
         
-        switch (current_selection.type)
+        switch (current_selection->type)
         {
-        case ValueType::TYPE_BOOL:{_incrementValue(&current_selection,1); interacted = true; break;}
+        case ValueType::TYPE_BOOL:{_incrementValue(current_selection,1); interacted = true; break;}
         case ValueType::TYPE_SUBMENU:{
             Menu* menu =
-                static_cast<Menu*>(current_selection.data);
+                static_cast<Menu*>(current_selection->data);
 
             goToMenu(menu, true);
             interacted = true;
@@ -362,11 +362,11 @@ void M5Menu::process_input(Input input){
     break;
     }
     _selection = _cursor_offset + _cursor_index;
-    if (ran_function) current_selection.function();
+    if (ran_function) current_selection->function();
     else render();
     if (!interacted) return;
-    if(_callback) _callback(&current_selection,_menuStack[_stack_index]);
-    if(&current_selection.function and !ran_function) current_selection.function();
+    if(_callback) _callback(current_selection,_menuStack[_stack_index]);
+    if(current_selection->function and !ran_function) current_selection->function();
 }
 
 M5Menu::Menu* M5Menu::get_current_menu(){
