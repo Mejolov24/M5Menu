@@ -1,6 +1,6 @@
 {
   "name": "M5Menu",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "A lightweight Menu UI library for M5Stack devices, featuring a stack-based menu navigator, custom themes, and an explicit input processing API.",
   "keywords": "sd, file explorer,explorer,m5stack",
   "repository":
